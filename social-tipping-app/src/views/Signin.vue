@@ -31,7 +31,12 @@
       <br />
     </section>
     <section>
-      <Button class="button is-info" action="ログイン" :disabled="IsValue()" />
+      <Button
+        class="button is-info"
+        action="ログイン"
+        @click="signIn()"
+        :disabled="IsValue()"
+      />
     </section>
     <br />
     <section>
@@ -42,6 +47,8 @@
   </article>
 </template>
 <script>
+import firebase from 'firebase';
+
 import HeaderTitle from '../elements/BaseHeader';
 import InptText from '../elements/BaseInptText';
 import Button from '../elements/BaseButton';
@@ -62,6 +69,17 @@ export default {
     };
   },
   methods: {
+    signIn() {
+      firebase
+        .auth()
+        .signInWithEmailAndPassword(this.inptEmail, this.inptPasswd)
+        .then(() => {
+          this.$router.push('/home');
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    },
     IsValue() {
       const inptTaskChk = /\S/g;
       return (

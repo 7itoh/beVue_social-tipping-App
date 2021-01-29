@@ -93,7 +93,6 @@ export default {
             result.user.updateProfile({
               displayName: this.inptUserName,
             });
-            alert('アカウントを登録完了しました');
           })
           .catch((error) => {
             alert(error.message);

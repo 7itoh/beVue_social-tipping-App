@@ -83,7 +83,7 @@ export default {
   methods: {
     signUp() {
       const commitCheck = window.confirm(
-        `アカウント : ${this.inptUserName}のユーザー登録をしますがよろしいですか？?`
+        `アカウント : ${this.inptUserName}のユーザー登録をしますがよろしいですか？`
       );
       if (commitCheck) {
         firebase
@@ -93,6 +93,7 @@ export default {
             result.user.updateProfile({
               displayName: this.inptUserName,
             });
+            this.$router.push('/home');
           })
           .catch((error) => {
             alert(error.message);

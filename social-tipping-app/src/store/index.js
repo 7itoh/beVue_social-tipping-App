@@ -2,14 +2,14 @@ import { createStore } from 'vuex'
 
 const state = {}
 const getters = {}
-const actions = {}
 const mutations = {}
+const actions = {}
 
 const store = new createStore({
     state,
     getters,
+    mutations,
     actions,
-    mutations
 })
 
 export default store;

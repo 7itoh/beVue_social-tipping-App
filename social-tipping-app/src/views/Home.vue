@@ -9,10 +9,10 @@
     <br />
     <section class="columns is-centered">
       <div class="column is-one-third">
-        <h2>User_Name Testさん</h2>
+        <h2>User_Name {{ myName }}さん</h2>
       </div>
       <div class="column is-one-third">
-        <h2>Wallet残高 400</h2>
+        <h2>Wallet残高 {{ myWallet }}</h2>
       </div>
       <div>
         <button class="button is-one-third is-info">Logout</button>
@@ -50,8 +50,40 @@
   </article>
 </template>
 <script>
+import firebase from 'firebase';
+
 export default {
   name: 'Home',
+  data() {
+    return {
+      myName: '',
+      myWallet: '',
+    };
+  },
+  async mounted() {
+    await firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        const setMyName = user.displayName;
+        this.myName = setMyName;
+        this.getMyWallet();
+      }
+    });
+  },
+  methods: {
+    async getMyWallet() {
+      let myWalletValue = [];
+      let selectUser = await firebase.auth().currentUser.displayName;
+      const querySnapshot = await firebase
+        .firestore()
+        .collection('users')
+        .where('name', '==', selectUser)
+        .get();
+      await querySnapshot.forEach((getDoc) => {
+        myWalletValue = (getDoc.id, ' => ', getDoc.data());
+        this.myWallet = myWalletValue.wallet;
+      });
+    },
+  },
 };
 </script>
 <style scoped>

@@ -81,24 +81,36 @@ export default {
     };
   },
   methods: {
-    signUp() {
-      const commitCheck = window.confirm(
+    async signUp() {
+      const commitCheck = await window.confirm(
         `アカウント : ${this.inptUserName}のユーザー登録をしますがよろしいですか？`
       );
       if (commitCheck) {
-        firebase
+        await firebase
           .auth()
           .createUserWithEmailAndPassword(this.inptEmail, this.inptPasswd)
           .then((result) => {
             result.user.updateProfile({
               displayName: this.inptUserName,
             });
+            this.setFirstUserData();
             this.$router.push('/home');
           })
           .catch((error) => {
             alert(error.message);
           });
       }
+    },
+    async setFirstUserData() {
+      await firebase
+        .firestore()
+        .collection('users')
+        .add({
+          name: this.inptUserName,
+          wallet: 400,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
     },
     IsValue() {
       const inptTaskChk = /\S/g;

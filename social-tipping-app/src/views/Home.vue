@@ -9,10 +9,10 @@
     <br />
     <section class="columns is-centered">
       <div class="column is-one-third">
-        <h2>User_Name {{ myName }}さん</h2>
+        <h2>User_Name {{ setMyName }}さん</h2>
       </div>
       <div class="column is-one-third">
-        <h2>Wallet残高 {{ myWallet }}</h2>
+        <h2>Wallet残高 {{ setMyWallet }}</h2>
       </div>
       <div>
         <button class="button is-one-third is-info">Logout</button>
@@ -51,6 +51,7 @@
 </template>
 <script>
 import firebase from 'firebase';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'Home',
@@ -63,10 +64,16 @@ export default {
   mounted() {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
-        this.myName = user.displayName;
+        this.$store.dispatch('setMyName', user.displayName);
         this.getMyWallet(user);
       }
     });
+  },
+  computed: {
+    ...mapGetters({
+      setMyName: 'setMyName',
+      setMyWallet: 'setMyWallet',
+    }),
   },
   methods: {
     async getMyWallet(user) {
@@ -79,7 +86,7 @@ export default {
         .get();
       await querySnapshot.forEach((getDoc) => {
         myValue = (getDoc.id, ' => ', getDoc.data());
-        this.myWallet = myValue.wallet;
+        this.$store.dispatch('setMyWallet', myValue.wallet);
       });
     },
   },

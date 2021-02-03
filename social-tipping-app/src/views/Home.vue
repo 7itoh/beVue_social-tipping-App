@@ -60,27 +60,26 @@ export default {
       myWallet: '',
     };
   },
-  async mounted() {
-    await firebase.auth().onAuthStateChanged((user) => {
+  mounted() {
+    firebase.auth().onAuthStateChanged((user) => {
       if (user) {
-        const setMyName = user.displayName;
-        this.myName = setMyName;
-        this.getMyWallet();
+        this.myName = user.displayName;
+        this.getMyWallet(user);
       }
     });
   },
   methods: {
-    async getMyWallet() {
-      let myWalletValue = [];
-      let selectUser = await firebase.auth().currentUser.displayName;
+    async getMyWallet(user) {
+      let myValue = [];
+      let selectUser = await user.displayName;
       const querySnapshot = await firebase
         .firestore()
         .collection('users')
         .where('name', '==', selectUser)
         .get();
       await querySnapshot.forEach((getDoc) => {
-        myWalletValue = (getDoc.id, ' => ', getDoc.data());
-        this.myWallet = myWalletValue.wallet;
+        myValue = (getDoc.id, ' => ', getDoc.data());
+        this.myWallet = myValue.wallet;
       });
     },
   },

@@ -58,7 +58,8 @@
   </article>
 </template>
 <script>
-import firebase from 'firebase';
+// import firebase from 'firebase';
+import firebase from '../firebase/index';
 
 import HeaderTitle from '../elements/BaseHeader';
 import InptText from '../elements/BaseInptText';
@@ -81,36 +82,12 @@ export default {
     };
   },
   methods: {
-    async signUp() {
-      const commitCheck = await window.confirm(
-        `アカウント : ${this.inptUserName}のユーザー登録をしますがよろしいですか？`
+    signUp() {
+      firebase.signUpWithEmailAndPassword(
+        this.inptUserName,
+        this.inptEmail,
+        this.inptPasswd
       );
-      if (commitCheck) {
-        await firebase
-          .auth()
-          .createUserWithEmailAndPassword(this.inptEmail, this.inptPasswd)
-          .then((result) => {
-            result.user.updateProfile({
-              displayName: this.inptUserName,
-            });
-            this.setFirstUserData();
-            this.$router.push('/home');
-          })
-          .catch((error) => {
-            alert(error.message);
-          });
-      }
-    },
-    async setFirstUserData() {
-      await firebase
-        .firestore()
-        .collection('users')
-        .add({
-          name: this.inptUserName,
-          wallet: 400,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
     },
     IsValue() {
       const inptTaskChk = /\S/g;

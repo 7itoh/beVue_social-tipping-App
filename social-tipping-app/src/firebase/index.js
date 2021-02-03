@@ -1,5 +1,6 @@
 import firebase from 'firebase'
 import ENV from '../authentication.json'
+import router from '../router/index';
 
 const config = {
     apiKey : ENV.FIREBASE_API_KEY,
@@ -11,8 +12,55 @@ const config = {
     measurementId: ENV.FIREBASE_MEASUREMENT_ID
 }
 
-if (!firebase.apps.length) { 
-    firebase.initializeApp(config);
-}
+export default {
+    init() {
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(config);
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+        }
+    },
 
-export default firebase
+    siginInWithEmailAndPassword(email, password) { 
+        firebase.auth().signInWithEmailAndPassword(email, password)
+            .then(res => {
+                res.user.getIdToken().then(idToken => {
+                    localStorage.setItem('jwt', idToken);
+                    router.push('/home').catch(err => {
+                        console.log(err.message);
+                })
+            })
+        })
+    },
+
+    signUpWithEmailAndPassword(name, email, password) {
+        const userName = name;
+        firebase.auth().createUserWithEmailAndPassword(email, password)
+            .then(result => {
+                result.user.updateProfile({
+                    displayName: userName,
+                }).then(() => {
+                    this.setFirstUserData(result.user.displayName);
+                }).catch(error => { 
+                    alert(error.message);
+                })
+            })
+            .then(() => {
+                router.push('/home');
+            })
+            .catch((error) => {
+                alert(error.message);
+            });
+    },
+
+    async setFirstUserData(displayName) {
+      await firebase
+        .firestore()
+        .collection('users')
+        .add({
+          name: displayName,
+          wallet: 400,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+    },
+}

@@ -47,7 +47,7 @@
   </article>
 </template>
 <script>
-import firebase from 'firebase';
+import firebase from '../firebase/index';
 
 import HeaderTitle from '../elements/BaseHeader';
 import InptText from '../elements/BaseInptText';
@@ -69,16 +69,8 @@ export default {
     };
   },
   methods: {
-    async signIn() {
-      await firebase
-        .auth()
-        .signInWithEmailAndPassword(this.inptEmail, this.inptPasswd)
-        .then(() => {
-          this.$router.push('/home');
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+    signIn() {
+      firebase.siginInWithEmailAndPassword(this.inptEmail, this.inptPasswd);
     },
     IsValue() {
       const inptTaskChk = /\S/g;

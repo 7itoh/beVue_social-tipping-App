@@ -1,4 +1,6 @@
 import { createStore } from 'vuex'
+import firebase from 'firebase'
+import router from '../router/index'
 
 const state = {
     setMyName: '',
@@ -9,21 +11,78 @@ const getters = {
     setMyWallet: state => state.setMyWallet,
 }
 const mutations = {
-    setMyName(state, newName) { 
+    setInitialUserData(state, { newName, newWallet }) {
         state.setMyName = newName;
-    },
-    setMyWallet(state, newWallet) { 
         state.setMyWallet = newWallet;
     }
-
 }
 const actions = {
-    setMyName({ commit }, newName) {
-        commit('setMyName', newName);
+    addSignUp({ commit }, { userName, userEmail, userPasswd }) {
+        const initialWalletValue = 400;
+        firebase
+            .auth()
+            .createUserWithEmailAndPassword(userEmail, userPasswd)
+            .then((result) => {
+                result.user.updateProfile({
+                    displayName: userName,
+                }).then(() => {
+                    firebase
+                        .firestore()
+                        .collection('users')
+                        .add({
+                        name: result.user.displayName,
+                        wallet: initialWalletValue,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    }).catch(error => {
+                        console.log(error.message);
+                    })
+                    // 新規認証からHome画面へ遷移した後の初期値を表示させるためのコーディングになります。
+                    commit('setInitialUserData', { newName: result.user.displayName, newWallet: initialWalletValue });
+                })
+            })
+            .then(() => {
+              router.push('/home');
+            })
+            .catch((error) => {
+              alert(error.message);
+            })
     },
-    setMyWallet({ commit }, newWallet) { 
-        commit('setMyWallet', newWallet);
+
+    addSignIn( _, { email, passwd }) {
+        firebase.auth().signInWithEmailAndPassword(email, passwd)
+                .then(res => {
+                    res.user.getIdToken().then(idToken => {
+                        localStorage.setItem('jwt', idToken);
+                        router.push('/home').catch(err => {
+                            console.log(err.message);
+                    })
+                })
+            })
+    },
+
+    setInitialUserData({ commit }) { 
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                const setUserName = user.displayName;
+                firebase
+                    .firestore()
+                    .collection('users')
+                    .where('name', '==', setUserName)
+                    .get()
+                    .then((querySnapshot) => { 
+                        querySnapshot.forEach(doc => { 
+                            const myWalletValue = (doc.id, ' => ', doc.data());
+                            commit('setInitialUserData', { newName: setUserName, newWallet: myWalletValue.wallet })
+                        })
+                    })
+                    .catch(error => { 
+                        console.log(error.message);
+                    })
+            }
+        });
     }
+
 }
 
 const store = new createStore({

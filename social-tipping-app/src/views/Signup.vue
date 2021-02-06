@@ -58,8 +58,7 @@
   </article>
 </template>
 <script>
-// import firebase from 'firebase';
-import firebase from '../firebase/index';
+import { mapActions } from 'vuex';
 
 import HeaderTitle from '../elements/BaseHeader';
 import InptText from '../elements/BaseInptText';
@@ -82,12 +81,20 @@ export default {
     };
   },
   methods: {
+    ...mapActions({
+      addSignUp: 'addSignUp',
+    }),
     signUp() {
-      firebase.signUpWithEmailAndPassword(
-        this.inptUserName,
-        this.inptEmail,
-        this.inptPasswd
+      const commitCheck = window.confirm(
+        `アカウント : ${this.inptUserName}のユーザーを登録しますがよろしいですか？`
       );
+      if (commitCheck) {
+        this.addSignUp({
+          userName: this.inptUserName,
+          userEmail: this.inptEmail,
+          userPasswd: this.inptPasswd,
+        });
+      }
     },
     IsValue() {
       const inptTaskChk = /\S/g;

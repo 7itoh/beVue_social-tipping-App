@@ -50,24 +50,12 @@
   </article>
 </template>
 <script>
-import firebase from 'firebase';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'Home',
-  data() {
-    return {
-      myName: '',
-      myWallet: '',
-    };
-  },
   mounted() {
-    firebase.auth().onAuthStateChanged((user) => {
-      if (user) {
-        this.$store.dispatch('setMyName', user.displayName);
-        this.getMyWallet(user);
-      }
-    });
+    this.setInitialUserData();
   },
   computed: {
     ...mapGetters({
@@ -76,19 +64,9 @@ export default {
     }),
   },
   methods: {
-    async getMyWallet(user) {
-      let myValue = [];
-      let selectUser = await user.displayName;
-      const querySnapshot = await firebase
-        .firestore()
-        .collection('users')
-        .where('name', '==', selectUser)
-        .get();
-      await querySnapshot.forEach((getDoc) => {
-        myValue = (getDoc.id, ' => ', getDoc.data());
-        this.$store.dispatch('setMyWallet', myValue.wallet);
-      });
-    },
+    ...mapActions({
+      setInitialUserData: 'setInitialUserData',
+    }),
   },
 };
 </script>

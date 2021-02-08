@@ -17,7 +17,7 @@ const mutations = {
     }
 }
 const actions = {
-    addSignUp({ commit }, { userName, userEmail, userPasswd }) {
+    addSignUp( _, { userName, userEmail, userPasswd }) {
         const initialWalletValue = 400;
         firebase
             .auth()
@@ -34,15 +34,12 @@ const actions = {
                         wallet: initialWalletValue,
                         createdAt: new Date(),
                         updatedAt: new Date(),
+                    }).then(() => {
+                        router.push('/home');
                     }).catch(error => {
                         console.log(error.message);
                     })
-                    // 新規認証からHome画面へ遷移した後の初期値を表示させるためのコーディングになります。
-                    commit('setInitialUserData', { newName: result.user.displayName, newWallet: initialWalletValue });
                 })
-            })
-            .then(() => {
-              router.push('/home');
             })
             .catch((error) => {
               alert(error.message);

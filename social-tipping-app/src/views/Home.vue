@@ -15,7 +15,9 @@
         <h2>Wallet残高 {{ setMyWallet }}</h2>
       </div>
       <div>
-        <button class="button is-one-third is-info">Logout</button>
+        <button class="button is-one-third is-info" @click="signOut()">
+          Logout
+        </button>
       </div>
     </section>
     <br />
@@ -66,6 +68,7 @@ export default {
   methods: {
     ...mapActions({
       setInitialUserData: 'setInitialUserData',
+      signOut: 'signOut',
     }),
   },
 };

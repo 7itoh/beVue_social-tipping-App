@@ -9,10 +9,10 @@
     <br />
     <section class="columns is-centered">
       <div class="column is-one-third">
-        <h2>User_Name Testさん</h2>
+        <h2>User_Name {{ setMyName }}さん</h2>
       </div>
       <div class="column is-one-third">
-        <h2>Wallet残高 400</h2>
+        <h2>Wallet残高 {{ setMyWallet }}</h2>
       </div>
       <div>
         <button class="button is-one-third is-info">Logout</button>
@@ -50,8 +50,24 @@
   </article>
 </template>
 <script>
+import { mapGetters, mapActions } from 'vuex';
+
 export default {
   name: 'Home',
+  mounted() {
+    this.setInitialUserData();
+  },
+  computed: {
+    ...mapGetters({
+      setMyName: 'setMyName',
+      setMyWallet: 'setMyWallet',
+    }),
+  },
+  methods: {
+    ...mapActions({
+      setInitialUserData: 'setInitialUserData',
+    }),
+  },
 };
 </script>
 <style scoped>

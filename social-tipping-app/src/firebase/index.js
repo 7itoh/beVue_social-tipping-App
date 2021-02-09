@@ -11,8 +11,11 @@ const config = {
     measurementId: ENV.FIREBASE_MEASUREMENT_ID
 }
 
-if (!firebase.apps.length) { 
-    firebase.initializeApp(config);
+export default {
+    init() {
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(config);
+            firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+        }
+    },
 }
-
-export default firebase

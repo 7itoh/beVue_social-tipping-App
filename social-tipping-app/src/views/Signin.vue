@@ -47,7 +47,7 @@
   </article>
 </template>
 <script>
-import firebase from 'firebase';
+import { mapActions } from 'vuex';
 
 import HeaderTitle from '../elements/BaseHeader';
 import InptText from '../elements/BaseInptText';
@@ -69,16 +69,11 @@ export default {
     };
   },
   methods: {
+    ...mapActions({
+      addSignIn: 'addSignIn',
+    }),
     signIn() {
-      firebase
-        .auth()
-        .signInWithEmailAndPassword(this.inptEmail, this.inptPasswd)
-        .then(() => {
-          this.$router.push('/home');
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      this.addSignIn({ email: this.inptEmail, passwd: this.inptPasswd });
     },
     IsValue() {
       const inptTaskChk = /\S/g;

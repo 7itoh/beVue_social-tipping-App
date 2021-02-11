@@ -9,10 +9,10 @@
     <br />
     <section class="columns is-centered">
       <div class="column is-one-third">
-        <h2>User_Name {{ setMyName }}さん</h2>
+        <h2>User_Name {{ getMyName }}さん</h2>
       </div>
       <div class="column is-one-third">
-        <h2>Wallet残高 {{ setMyWallet }}</h2>
+        <h2>Wallet残高 {{ getMyWallet }}</h2>
       </div>
       <div>
         <button class="button is-one-third is-info" @click="signOut()">
@@ -25,6 +25,27 @@
     <section class="user-list-wrap">
       <h1 class="title">User List</h1>
       <br />
+      <section>
+        <template v-if="modal">
+          <section id="overlay">
+            <section id="content">
+              <br>
+              <section>
+                <p>ユーザーネーム: {{ getChkUserName }}さん</p>
+              </section>
+              <hr>
+              <section>
+                  <p>Wallet残高: {{ getChkUserWallet }}</p>
+              </section>
+              <br>
+              <br>
+              <section class="text-right">
+                <button type="button" @click="offModal()" class="button is-info">閉じる</button>
+              </section>
+            </section>
+          </section>
+        </template>
+      </section>
       <br />
       <section class="columns is-centered">
         <table class="table">
@@ -33,11 +54,11 @@
             <th>財布をみる</th>
             <th>送金する</th>
           </thead>
-          <tbody>
+          <tbody v-for="(user,userIndex) of getUsersData" :key="userIndex">
             <tr>
-              <td>User_A</td>
+              <td>{{ user.name }}</td>
               <td>
-                <button class="button is-primary">Wallet</button>
+                <button class="button is-primary" @click="dispOn(user)">Wallet</button>
               </td>
               <td>
                 <button class="button is-danger">Sender</button>
@@ -56,20 +77,36 @@ import { mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'Home',
+  data(){
+    return{
+      modal: false,
+    }
+  },
   mounted() {
     this.setInitialUserData();
   },
   computed: {
     ...mapGetters({
-      setMyName: 'setMyName',
-      setMyWallet: 'setMyWallet',
+      getMyName: 'getMyName',
+      getMyWallet: 'getMyWallet',
+      getUsersData: 'getUsersData',
+      getChkUserName: 'getChkUserName',
+      getChkUserWallet: 'getChkUserWallet'
     }),
   },
   methods: {
     ...mapActions({
       setInitialUserData: 'setInitialUserData',
       signOut: 'signOut',
+      setChkUserWallet: 'setChkUserWallet',
     }),
+    dispOn(chkUser){
+      this.modal = !this.modal ? true : false;
+      this.setChkUserWallet(chkUser);
+    },
+    offModal(){
+      this.modal = !this.modal ? true : false;
+    },
   },
 };
 </script>
@@ -82,4 +119,23 @@ td {
   justify-content: center;
   text-align: center;
 }
+   #content {
+       z-index: 2;
+       width: 80%;
+       padding: 1em;
+       background: #fff;
+   }
+
+   #overlay {
+       z-index: 1;
+       position: fixed;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       background-color: rgba(0, 0, 0, 0.5);
+       display: flex;
+       align-items: center;
+       justify-content: center;
+   }
 </style>

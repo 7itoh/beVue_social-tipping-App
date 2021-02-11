@@ -3,21 +3,36 @@ import firebase from 'firebase'
 import router from '../router/index'
 
 const state = {
+    idToken: '',
     setMyName: '',
     setMyWallet: '',
 }
 const getters = {
+    setIdToken: state => state.idToken,
     setMyName: state => state.setMyName,
     setMyWallet: state => state.setMyWallet,
 }
 const mutations = {
+    setIdToken(state, newIdToken) {
+        state.idToken = newIdToken ? true : false;
+    },
+
     setInitialUserData(state, { newName, newWallet }) {
         state.setMyName = newName;
         state.setMyWallet = newWallet;
     }
 }
 const actions = {
-    addSignUp( _, { userName, userEmail, userPasswd }) {
+    initialIdToken({ commit }) { 
+        const idToken = localStorage.getItem('jwt', idToken);
+        if (!idToken) {
+            return;
+        } else { 
+            commit('setIdToken', idToken);
+        }
+    },
+
+    addSignUp({ commit }, { userName, userEmail, userPasswd }) {
         const initialWalletValue = 400;
         firebase
             .auth()
@@ -34,9 +49,14 @@ const actions = {
                         wallet: initialWalletValue,
                         createdAt: new Date(),
                         updatedAt: new Date(),
-                    }).then(() => {
-                        router.push('/home');
-                    }).catch(error => {
+                        }).then(() => { 
+                            result.user.getIdToken().then(idToken => { 
+                                localStorage.setItem('jwt', idToken);
+                                commit('setIdToken', idToken);
+                            })
+                        }).then(() => { 
+                            router.push('/home');
+                        }).catch(error => {
                         console.log(error.message);
                     })
                 })
@@ -46,15 +66,18 @@ const actions = {
             })
     },
 
-    addSignIn( _, { email, passwd }) {
+    addSignIn({ commit }, { email, passwd }) {
         firebase.auth().signInWithEmailAndPassword(email, passwd)
-                .then(res => {
-                    res.user.getIdToken().then(idToken => {
+            .then(result => { 
+                result.user.getIdToken()
+                    .then( idToken => { 
                         localStorage.setItem('jwt', idToken);
-                        router.push('/home').catch(err => {
-                            console.log(err.message);
+                        commit('setIdToken', idToken);
+                    }).then(() => { 
+                        router.push('/home');
+                    }).catch(error => { 
+                        console.log(error.message);
                     })
-                })
             })
     },
 
@@ -74,12 +97,23 @@ const actions = {
                         })
                     })
                     .catch(error => { 
-                        console.log(error.message);
+                            console.log(error.message);
                     })
             }
         });
-    }
+    },
 
+    signOut({ commit }) {
+        firebase.auth().signOut().then(() => { 
+            localStorage.removeItem('jwt')
+            const removeIdToken = null;
+            commit('setIdToken', removeIdToken);
+        }).then(() => { 
+            router.push('/');
+        }).catch(error => { 
+            console.log(error.message);
+        })
+    }
 }
 
 const store = new createStore({

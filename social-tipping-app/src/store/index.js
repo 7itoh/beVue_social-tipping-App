@@ -4,19 +4,21 @@ import router from '../router/index'
 
 const state = {
     idToken: '',
-    setMyName: '',
-    setMyWallet: '',
+    myName: '',
+    myWallet: '',
     usersData: [],
-    checkUserName: '',
-    checkUserWallet: '',
+    otherUser: {
+        name: '',
+        wallet: '',
+    },
 }
 const getters = {
     setIdToken: state => state.idToken,
-    getMyName: state => state.setMyName,
-    getMyWallet: state => state.setMyWallet,
+    getMyName: state => state.myName,
+    getMyWallet: state => state.myWallet,
     getUsersData: state => state.usersData,
-    getChkUserName: state => state.checkUserName,
-    getChkUserWallet: state => state.checkUserWallet,
+    getShowUserName: state => state.otherUser.name,
+    getShowUserWallet: state => state.otherUser.wallet,
 }
 const mutations = {
     setIdToken(state, newIdToken) {
@@ -24,17 +26,17 @@ const mutations = {
     },
 
     setInitialUserData(state, { newName, newWallet }) {
-        state.setMyName = newName;
-        state.setMyWallet = newWallet;
+        state.myName = newName;
+        state.myWallet = newWallet;
     },
 
     setUsersData(state, newUsersData) {
         state.usersData = newUsersData;
     },
 
-    setChkUserWallet(state, chkUserVal) {
-        state.checkUserName = chkUserVal.name;
-        state.checkUserWallet = chkUserVal.wallet;
+    setChkUser(state, showUserVal) {
+        state.otherUser.name = showUserVal.name;
+        state.otherUser.wallet = showUserVal.wallet;
     },
 }
 const actions = {
@@ -141,12 +143,11 @@ const actions = {
                 usersList.push(doc.data());
             })
         });
-        console.log(usersList);
         commit('setUsersData', usersList);
     },
 
-    setChkUserWallet({ commit }, chkUserVal){
-        commit('setChkUserWallet', chkUserVal);
+    setShowUser({ commit }, showUserVal){
+        commit('setChkUser', showUserVal);
     }
 }
 

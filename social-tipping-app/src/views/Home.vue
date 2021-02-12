@@ -29,18 +29,24 @@
         <template v-if="modal">
           <section id="overlay">
             <section id="content">
-              <br>
+              <br />
               <section>
-                <p>ユーザーネーム: {{ getChkUserName }}さん</p>
+                <p>ユーザーネーム: {{ getShowUserName }}さん</p>
               </section>
-              <hr>
+              <hr />
               <section>
-                  <p>Wallet残高: {{ getChkUserWallet }}</p>
+                <p>Wallet残高: {{ getShowUserWallet }}</p>
               </section>
-              <br>
-              <br>
+              <br />
+              <br />
               <section class="text-right">
-                <button type="button" @click="offModal()" class="button is-info">閉じる</button>
+                <button
+                  type="button"
+                  @click="offModal()"
+                  class="button is-info"
+                >
+                  閉じる
+                </button>
               </section>
             </section>
           </section>
@@ -54,11 +60,13 @@
             <th>財布をみる</th>
             <th>送金する</th>
           </thead>
-          <tbody v-for="(user,userIndex) of getUsersData" :key="userIndex">
+          <tbody v-for="(user, userIndex) of getUsersData" :key="userIndex">
             <tr>
               <td>{{ user.name }}</td>
               <td>
-                <button class="button is-primary" @click="dispOn(user)">Wallet</button>
+                <button class="button is-primary" @click="dispOn(user)">
+                  Wallet
+                </button>
               </td>
               <td>
                 <button class="button is-danger">Sender</button>
@@ -77,10 +85,10 @@ import { mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'Home',
-  data(){
-    return{
+  data() {
+    return {
       modal: false,
-    }
+    };
   },
   mounted() {
     this.setInitialUserData();
@@ -90,21 +98,21 @@ export default {
       getMyName: 'getMyName',
       getMyWallet: 'getMyWallet',
       getUsersData: 'getUsersData',
-      getChkUserName: 'getChkUserName',
-      getChkUserWallet: 'getChkUserWallet'
+      getShowUserName: 'getShowUserName',
+      getShowUserWallet: 'getShowUserWallet',
     }),
   },
   methods: {
     ...mapActions({
       setInitialUserData: 'setInitialUserData',
       signOut: 'signOut',
-      setChkUserWallet: 'setChkUserWallet',
+      setShowUser: 'setShowUser',
     }),
-    dispOn(chkUser){
+    dispOn(showUserVal) {
       this.modal = !this.modal ? true : false;
-      this.setChkUserWallet(chkUser);
+      this.setShowUser(showUserVal);
     },
-    offModal(){
+    offModal() {
       this.modal = !this.modal ? true : false;
     },
   },
@@ -119,23 +127,23 @@ td {
   justify-content: center;
   text-align: center;
 }
-   #content {
-       z-index: 2;
-       width: 80%;
-       padding: 1em;
-       background: #fff;
-   }
+#content {
+  z-index: 2;
+  width: 80%;
+  padding: 1em;
+  background: #fff;
+}
 
-   #overlay {
-       z-index: 1;
-       position: fixed;
-       top: 0;
-       left: 0;
-       width: 100%;
-       height: 100%;
-       background-color: rgba(0, 0, 0, 0.5);
-       display: flex;
-       align-items: center;
-       justify-content: center;
-   }
+#overlay {
+  z-index: 1;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 </style>

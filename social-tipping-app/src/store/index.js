@@ -6,11 +6,17 @@ const state = {
     idToken: '',
     setMyName: '',
     setMyWallet: '',
+    usersData: [],
+    checkUserName: '',
+    checkUserWallet: '',
 }
 const getters = {
     setIdToken: state => state.idToken,
-    setMyName: state => state.setMyName,
-    setMyWallet: state => state.setMyWallet,
+    getMyName: state => state.setMyName,
+    getMyWallet: state => state.setMyWallet,
+    getUsersData: state => state.usersData,
+    getChkUserName: state => state.checkUserName,
+    getChkUserWallet: state => state.checkUserWallet,
 }
 const mutations = {
     setIdToken(state, newIdToken) {
@@ -20,7 +26,16 @@ const mutations = {
     setInitialUserData(state, { newName, newWallet }) {
         state.setMyName = newName;
         state.setMyWallet = newWallet;
-    }
+    },
+
+    setUsersData(state, newUsersData) {
+        state.usersData = newUsersData;
+    },
+
+    setChkUserWallet(state, chkUserVal) {
+        state.checkUserName = chkUserVal.name;
+        state.checkUserWallet = chkUserVal.wallet;
+    },
 }
 const actions = {
     initialIdToken({ commit }) { 
@@ -81,24 +96,28 @@ const actions = {
             })
     },
 
-    setInitialUserData({ commit }) { 
+    setInitialUserData({ commit, dispatch }) { 
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
                 const setUserName = user.displayName;
-                firebase
-                    .firestore()
-                    .collection('users')
-                    .where('name', '==', setUserName)
-                    .get()
-                    .then((querySnapshot) => { 
-                        querySnapshot.forEach(doc => { 
-                            const myWalletValue = (doc.id, ' => ', doc.data());
-                            commit('setInitialUserData', { newName: setUserName, newWallet: myWalletValue.wallet })
+                dispatch('setUsersData', setUserName).then(() => {
+                    firebase
+                        .firestore()
+                        .collection('users')
+                        .where('name', '==', setUserName)
+                        .get()
+                        .then((querySnapshot) => { 
+                            querySnapshot.forEach(doc => { 
+                                const myWalletValue = (doc.id, ' => ', doc.data());
+                                commit('setInitialUserData', { newName: setUserName, newWallet: myWalletValue.wallet })
+                            })
                         })
-                    })
-                    .catch(error => { 
-                            console.log(error.message);
-                    })
+                        .catch(error => { 
+                                console.log(error.message);
+                        })
+                }).catch(error => {
+                    console.log(error.message);
+                })
             }
         });
     },
@@ -113,6 +132,21 @@ const actions = {
         }).catch(error => { 
             console.log(error.message);
         })
+    },
+
+    setUsersData({ commit }, userName){
+        const usersList = [];
+        firebase.firestore().collection('users').where('name', '!=', userName).get().then((snapshot) => {
+            snapshot.forEach(doc => {
+                usersList.push(doc.data());
+            })
+        });
+        console.log(usersList);
+        commit('setUsersData', usersList);
+    },
+
+    setChkUserWallet({ commit }, chkUserVal){
+        commit('setChkUserWallet', chkUserVal);
     }
 }
 

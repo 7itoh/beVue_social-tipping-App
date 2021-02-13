@@ -49,8 +49,7 @@ const actions = {
         }
     },
 
-    addSignUp({ commit }, { userName, userEmail, userPasswd }) {
-        const initialWalletValue = 400;
+    addSignUp({ commit, dispatch }, { userName, userEmail, userPasswd }) {
         firebase
             .auth()
             .createUserWithEmailAndPassword(userEmail, userPasswd)
@@ -58,15 +57,8 @@ const actions = {
                 result.user.updateProfile({
                     displayName: userName,
                 }).then(() => {
-                    firebase
-                        .firestore()
-                        .collection('users')
-                        .add({
-                        name: result.user.displayName,
-                        wallet: initialWalletValue,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        }).then(() => { 
+                    dispatch('setUserFirstData', result.user.displayName)
+                        .then(() => { 
                             result.user.getIdToken().then(idToken => { 
                                 localStorage.setItem('jwt', idToken);
                                 commit('setIdToken', idToken);
@@ -98,6 +90,19 @@ const actions = {
             })
     },
 
+    signOut({ commit }) {
+        firebase.auth().signOut().then(() => { 
+            localStorage.removeItem('jwt')
+            const removeIdToken = null;
+            commit('setIdToken', removeIdToken);
+        }).then(() => { 
+            router.push('/');
+        }).catch(error => { 
+            console.log(error.message);
+        })
+    },
+
+    // 認証後のユーザーデータ取得
     setInitialUserData({ commit, dispatch }) { 
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
@@ -124,18 +129,21 @@ const actions = {
         });
     },
 
-    signOut({ commit }) {
-        firebase.auth().signOut().then(() => { 
-            localStorage.removeItem('jwt')
-            const removeIdToken = null;
-            commit('setIdToken', removeIdToken);
-        }).then(() => { 
-            router.push('/');
-        }).catch(error => { 
-            console.log(error.message);
-        })
+    // 新規認証時のユーザー値の登録
+    setUserFirstData(_, userName) {
+        const initialWalletValue = 400;
+        firebase
+            .firestore()
+            .collection('users')
+            .add({
+            name: userName,
+            wallet: initialWalletValue,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            })
     },
-
+    
+    // 他ユーザーの全件データ取得
     setUsersData({ commit }, userName){
         const usersList = [];
         firebase.firestore().collection('users').where('name', '!=', userName).get().then((snapshot) => {
@@ -146,9 +154,51 @@ const actions = {
         commit('setUsersData', usersList);
     },
 
+    // 他ユーザーの名前と財布の参照
     setShowUser({ commit }, showUserVal){
         commit('setChkUser', showUserVal);
-    }
+    },
+
+    // ユーザーへの送金
+    setContruct({ dispatch }, contruct) { 
+        dispatch('updateRecipient', contruct);
+        dispatch('updateSender', contruct);
+    },
+
+    // 入金者のWallet更新処理
+    updateRecipient(_, contruct) { 
+        const userName = contruct.recipient;
+        const recvWallet = contruct.wallet;
+        firebase.firestore().collection('users').where('name', '==', userName).get().then((snapshot) => { 
+            snapshot.forEach(doc => { 
+                const updateWalletVal = doc.data().wallet + recvWallet;
+                const userRef = firebase.firestore().collection('users').doc(doc.id);
+                userRef.update({
+                    wallet: updateWalletVal,
+                    updatedAt: new Date(),
+                })
+            })
+        })
+    },
+
+    // 送金者のWallet更新処理
+    updateSender(_, contruct) { 
+        const userName = contruct.sender;
+        const sendWallet = contruct.wallet;
+        firebase.firestore().collection('users').where('name', '==', userName).get().then((snapshot) => { 
+            snapshot.forEach(doc => { 
+                const updateWalletVal = doc.data().wallet - sendWallet;
+                const userRef = firebase.firestore().collection('users').doc(doc.id);
+                userRef.update({
+                    wallet: updateWalletVal,
+                    updatedAt: new Date(),
+                })
+            })
+        })
+
+    },
+
+
 }
 
 const store = new createStore({

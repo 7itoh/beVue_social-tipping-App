@@ -26,7 +26,7 @@
       <h1 class="title">User List</h1>
       <br />
       <section>
-        <template v-if="modal">
+        <template v-if="showWalletmodal">
           <section id="overlay">
             <section id="content">
               <br />
@@ -42,7 +42,42 @@
               <section class="text-right">
                 <button
                   type="button"
-                  @click="offModal()"
+                  @click="offShowWalletmodal()"
+                  class="button is-info"
+                >
+                  閉じる
+                </button>
+              </section>
+            </section>
+          </section>
+        </template>
+      </section>
+      <section>
+        <template v-if="sendWalletmodal">
+          <section id="overlay">
+            <section id="content">
+              <br />
+              <section>
+                <p>{{ getMyName }}さん Wallet残高:{{ getMyWallet }}</p>
+              </section>
+              <hr />
+              <section>
+                <label>送金額: </label>
+                <input type="text" v-model.number="sendWalletVal" />
+                <button
+                  class="button is-danger"
+                  @click="addContruct(otherUser)"
+                  :disabled="IsValue()"
+                >
+                  送金
+                </button>
+              </section>
+              <br />
+              <br />
+              <section class="text-right">
+                <button
+                  type="button"
+                  @click="offSendWalletmodal()"
                   class="button is-info"
                 >
                   閉じる
@@ -64,12 +99,20 @@
             <tr>
               <td>{{ user.name }}</td>
               <td>
-                <button class="button is-primary" @click="dispOn(user)">
+                <button
+                  class="button is-primary"
+                  @click="dispShowWalletOn(user)"
+                >
                   Wallet
                 </button>
               </td>
               <td>
-                <button class="button is-danger">Sender</button>
+                <button
+                  class="button is-danger"
+                  @click="dispSendWalletOn(user)"
+                >
+                  Sender
+                </button>
               </td>
             </tr>
           </tbody>
@@ -81,19 +124,24 @@
   </article>
 </template>
 <script>
-import { mapGetters, mapActions } from 'vuex';
+import { mapState, mapGetters, mapActions } from 'vuex';
 
 export default {
   name: 'Home',
   data() {
     return {
-      modal: false,
+      showWalletmodal: false,
+      sendWalletmodal: false,
+      sendWalletVal: '',
     };
   },
   mounted() {
     this.setInitialUserData();
   },
   computed: {
+    ...mapState({
+      otherUser: 'otherUser',
+    }),
     ...mapGetters({
       getMyName: 'getMyName',
       getMyWallet: 'getMyWallet',
@@ -107,18 +155,56 @@ export default {
       setInitialUserData: 'setInitialUserData',
       signOut: 'signOut',
       setShowUser: 'setShowUser',
+      setContruct: 'setContruct',
     }),
-    dispOn(showUserVal) {
-      this.modal = !this.modal ? true : false;
+    addContruct(user) {
+      console.log(user);
+      const commitCheck = window.confirm(
+        `アカウント : ${user.name}へ、Wallet:『${this.sendWalletVal}』を送金しますがよろしいですか？`
+      );
+      if (commitCheck) {
+        const contruct = {
+          sender: this.getMyName,
+          wallet: this.sendWalletVal,
+          recipient: user.name,
+        };
+        this.setContruct(contruct);
+        setTimeout(() => {
+          this.setInitialUserData();
+          this.sendWalletVal = '';
+          this.offSendWalletmodal();
+        }, 2000);
+      }
+    },
+    dispShowWalletOn(showUserVal) {
+      this.showWalletmodal = !this.showWalletmodal ? true : false;
       this.setShowUser(showUserVal);
     },
-    offModal() {
-      this.modal = !this.modal ? true : false;
+    offShowWalletmodal() {
+      this.showWalletmodal = !this.showWalletmodal ? true : false;
+    },
+    dispSendWalletOn(showUserVal) {
+      this.sendWalletmodal = !this.sendWalletmodal ? true : false;
+      this.setShowUser(showUserVal);
+    },
+    offSendWalletmodal() {
+      this.sendWalletmodal = !this.sendWalletmodal ? true : false;
+    },
+    IsValue() {
+      const inptTaskChk = /^[0-9]+$/;
+      return (
+        !this.sendWalletVal ||
+        !inptTaskChk.test(this.sendWalletVal) ||
+        this.sendWalletVal > this.getMyWallet
+      );
     },
   },
 };
 </script>
 <style scoped>
+button {
+  margin-left: 10px;
+}
 th {
   padding-left: 20px;
 }

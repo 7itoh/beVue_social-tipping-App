@@ -1,5 +1,7 @@
 import firebase from 'firebase'
 import ENV from '../authentication.json'
+// import router from '../router/index';
+// import store from '../store/index';
 
 const config = {
     apiKey : ENV.FIREBASE_API_KEY,

@@ -17,6 +17,7 @@ const getters = {
     getMyName: state => state.myName,
     getMyWallet: state => state.myWallet,
     getUsersData: state => state.usersData,
+    getShowUserId: state => state.otherUser.id,
     getShowUserName: state => state.otherUser.name,
     getShowUserWallet: state => state.otherUser.wallet,
 }
@@ -154,50 +155,79 @@ const actions = {
         commit('setUsersData', usersList);
     },
 
-    // 他ユーザーの名前と財布の参照
+    // 他ユーザーのIDと名前と財布の参照
     setShowUser({ commit }, showUserVal){
         commit('setChkUser', showUserVal);
     },
 
-    // ユーザーへの送金
-    setContruct({ dispatch }, contruct) { 
-        dispatch('updateRecipient', contruct);
-        dispatch('updateSender', contruct);
-    },
+    setContruct( _, contruct){
+        const senderUser = contruct.sender;
+        const recverUser = contruct.recipient;
+        const contructWallet = contruct.wallet;
 
-    // 入金者のWallet更新処理
-    updateRecipient(_, contruct) { 
-        const userName = contruct.recipient;
-        const recvWallet = contruct.wallet;
-        firebase.firestore().collection('users').where('name', '==', userName).get().then((snapshot) => { 
-            snapshot.forEach(doc => { 
-                const updateWalletVal = doc.data().wallet + recvWallet;
-                const userRef = firebase.firestore().collection('users').doc(doc.id);
-                userRef.update({
-                    wallet: updateWalletVal,
-                    updatedAt: new Date(),
-                })
+        let contructId = {
+            senderId: '',
+            receverId: '',
+        }
+
+        const doneContruct = async () => {
+            await firebase.firestore().collection('users').where('name', '==', senderUser).get().then((snapshot) => {
+                snapshot.forEach(doc => {
+                    contructId.senderId = doc.id;
+                });
             })
-        })
-    },
-
-    // 送金者のWallet更新処理
-    updateSender(_, contruct) { 
-        const userName = contruct.sender;
-        const sendWallet = contruct.wallet;
-        firebase.firestore().collection('users').where('name', '==', userName).get().then((snapshot) => { 
-            snapshot.forEach(doc => { 
-                const updateWalletVal = doc.data().wallet - sendWallet;
-                const userRef = firebase.firestore().collection('users').doc(doc.id);
-                userRef.update({
-                    wallet: updateWalletVal,
-                    updatedAt: new Date(),
-                })
+            await firebase.firestore().collection('users').where('name', '==', recverUser).get().then((snapshot) => {
+                snapshot.forEach(doc => {
+                    contructId.receverId = doc.id;
+                });
             })
-        })
 
-    },
+            // Wallet送金者
+            const senderRef = await firebase.firestore().collection('users').doc(contructId.senderId);
+            // const senderRef = firebase.firestore().collection('users').doc('2Y2OtQOD5ltNMeQLhN0J');
 
+            // Wallet入金者
+            const recverRef = await firebase.firestore().collection('users').doc(contructId.receverId);
+            // const recverRef = firebase.firestore().collection('users').doc('66povHxuO556HGx1vHQU');
+    
+            await firebase.firestore().runTransaction(async (t) => {
+                await t.get(senderRef).then(senderDoc => {
+                    if (!senderDoc.exists) {
+                        throw "Document does not exist!";
+                    }
+                    const updateWallet = senderDoc.data().wallet - contructWallet;
+                    if (updateWallet < senderDoc.data().wallet) {
+                        t.update(senderRef, {
+                            wallet: updateWallet,
+                            updatedAt: new Date()
+                        });
+                    } else {
+                        return Promise.reject("Sorry! updateWallet is too big.");
+                    }
+                }).catch((err) => {
+                    console.error(err);
+                });
+
+                await t.get(recverRef).then(recverDoc => {
+                    if (!recverDoc.exists) {
+                        throw "Document does not exist!";
+                    }
+                    const recverWallet = recverDoc.data().wallet + contructWallet;
+                    if (recverWallet > recverDoc.data().wallet) {
+                        t.update(recverRef, { 
+                            wallet: recverWallet,
+                            updatedAt: new Date()
+                        });
+                    } else {
+                        return Promise.reject("Sorry! recverWallet is too small.");
+                    }
+                }).catch((err) => {
+                    console.error(err);
+                });
+            })
+        }
+        doneContruct();
+    }
 
 }
 

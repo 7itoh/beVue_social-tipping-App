@@ -158,7 +158,6 @@ export default {
       setContruct: 'setContruct',
     }),
     addContruct(user) {
-      console.log(user);
       const commitCheck = window.confirm(
         `アカウント : ${user.name}へ、Wallet:『${this.sendWalletVal}』を送金しますがよろしいですか？`
       );
@@ -173,7 +172,7 @@ export default {
           this.setInitialUserData();
           this.sendWalletVal = '';
           this.offSendWalletmodal();
-        }, 2000);
+        }, 2500);
       }
     },
     dispShowWalletOn(showUserVal) {

@@ -164,8 +164,10 @@ export default {
       if (commitCheck) {
         const contruct = {
           sender: this.getMyName,
-          wallet: this.sendWalletVal,
+          senderWallet: this.getMyWallet,
           recipient: user.name,
+          recipientWallet: user.wallet,
+          contructWallet: this.sendWalletVal,
         };
         this.setContruct(contruct);
         setTimeout(() => {

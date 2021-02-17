@@ -17,6 +17,7 @@ const getters = {
     getMyName: state => state.myName,
     getMyWallet: state => state.myWallet,
     getUsersData: state => state.usersData,
+    getShowUserId: state => state.otherUser.id,
     getShowUserName: state => state.otherUser.name,
     getShowUserWallet: state => state.otherUser.wallet,
 }
@@ -49,8 +50,7 @@ const actions = {
         }
     },
 
-    addSignUp({ commit }, { userName, userEmail, userPasswd }) {
-        const initialWalletValue = 400;
+    addSignUp({ commit, dispatch }, { userName, userEmail, userPasswd }) {
         firebase
             .auth()
             .createUserWithEmailAndPassword(userEmail, userPasswd)
@@ -58,15 +58,8 @@ const actions = {
                 result.user.updateProfile({
                     displayName: userName,
                 }).then(() => {
-                    firebase
-                        .firestore()
-                        .collection('users')
-                        .add({
-                        name: result.user.displayName,
-                        wallet: initialWalletValue,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        }).then(() => { 
+                    dispatch('setUserFirstData', result.user.displayName)
+                        .then(() => { 
                             result.user.getIdToken().then(idToken => { 
                                 localStorage.setItem('jwt', idToken);
                                 commit('setIdToken', idToken);
@@ -98,6 +91,19 @@ const actions = {
             })
     },
 
+    signOut({ commit }) {
+        firebase.auth().signOut().then(() => { 
+            localStorage.removeItem('jwt')
+            const removeIdToken = null;
+            commit('setIdToken', removeIdToken);
+        }).then(() => { 
+            router.push('/');
+        }).catch(error => { 
+            console.log(error.message);
+        })
+    },
+
+    // 認証後のユーザーデータ取得
     setInitialUserData({ commit, dispatch }) { 
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
@@ -124,18 +130,21 @@ const actions = {
         });
     },
 
-    signOut({ commit }) {
-        firebase.auth().signOut().then(() => { 
-            localStorage.removeItem('jwt')
-            const removeIdToken = null;
-            commit('setIdToken', removeIdToken);
-        }).then(() => { 
-            router.push('/');
-        }).catch(error => { 
-            console.log(error.message);
-        })
+    // 新規認証時のユーザー値の登録
+    setUserFirstData(_, userName) {
+        const initialWalletValue = 400;
+        firebase
+            .firestore()
+            .collection('users')
+            .add({
+            name: userName,
+            wallet: initialWalletValue,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            })
     },
-
+    
+    // 他ユーザーの全件データ取得
     setUsersData({ commit }, userName){
         const usersList = [];
         firebase.firestore().collection('users').where('name', '!=', userName).get().then((snapshot) => {
@@ -146,9 +155,67 @@ const actions = {
         commit('setUsersData', usersList);
     },
 
+    // 他ユーザーのIDと名前と財布の参照
     setShowUser({ commit }, showUserVal){
         commit('setChkUser', showUserVal);
-    }
+    },
+
+    setContruct(_, contruct) {
+        // 入金額
+        const contructWallet = contruct.contructWallet;
+
+        // 送金者
+        const senderUser = contruct.sender;
+        const senderWallet = contruct.senderWallet;
+        const updateSndWallet = senderWallet - contructWallet;
+
+        // 受金者
+        const recverUser = contruct.recipient;
+        const recverWallet = contruct.recipientWallet;
+        const updateRcvWallet = recverWallet + contructWallet;
+
+        let contructId = {
+            senderId: '',
+            receverId: '',
+        }
+
+        const doneContruct = async () => {
+            await firebase.firestore().collection('users').where('name', '==', senderUser).get().then((snapshot) => {
+                snapshot.forEach(doc => {
+                    contructId.senderId = doc.id;
+                });
+            })
+            await firebase.firestore().collection('users').where('name', '==', recverUser).get().then((snapshot) => {
+                snapshot.forEach(doc => {
+                    contructId.receverId = doc.id;
+                });
+            })
+
+            // Wallet送金者
+            const senderRef = await firebase.firestore().collection('users').doc(contructId.senderId);
+
+            // Wallet入金者
+            const recverRef = await firebase.firestore().collection('users').doc(contructId.receverId);
+   
+            await firebase.firestore().runTransaction(async (t) => {
+                if (updateRcvWallet < recverWallet) {
+                    return Promise.reject("Sorry! updateRcvWallet is too big.");
+                } else if (updateSndWallet > senderWallet) {
+                    return Promise.reject("Sorry! updateSndWallet is too small.");
+                } else { 
+                    await t.update(senderRef, {
+                            wallet: updateSndWallet,
+                            updatedAt: new Date()
+                        });
+                    await t.update(recverRef, {
+                            wallet: updateRcvWallet,
+                            updatedAt: new Date()
+                        });
+                }
+            })
+        }
+        doneContruct();
+    },
 }
 
 const store = new createStore({
